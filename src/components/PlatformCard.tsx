@@ -1,8 +1,10 @@
 import React from 'react';
-import { PlatformData } from '../types';
+import { HotTopic, PlatformData } from '../types';
 
 interface PlatformCardProps {
   platformData: PlatformData;
+  filteredTopics: HotTopic[];
+  searchQuery: string;
   onRefresh: (platform: string) => void;
   onDragStart: (e: React.DragEvent, platform: string) => void;
   onDragEnd: (e: React.DragEvent) => void;
@@ -12,6 +14,8 @@ interface PlatformCardProps {
 
 const PlatformCard: React.FC<PlatformCardProps> = ({
   platformData,
+  filteredTopics,
+  searchQuery,
   onRefresh,
   onDragStart,
   onDragEnd,
@@ -19,6 +23,43 @@ const PlatformCard: React.FC<PlatformCardProps> = ({
   onDrop
 }) => {
   const { platform, displayName, icon, color, data, loading, error } = platformData;
+  const visibleTopicCount = 8;
+
+  const highlightText = (text: string, query: string) => {
+    const trimmedQuery = query.trim();
+    if (!trimmedQuery) return text;
+
+    const lowerText = text.toLowerCase();
+    const lowerQuery = trimmedQuery.toLowerCase();
+    const segments: React.ReactNode[] = [];
+    let startIndex = 0;
+    let matchIndex = lowerText.indexOf(lowerQuery, startIndex);
+
+    while (matchIndex !== -1) {
+      if (matchIndex > startIndex) {
+        segments.push(text.slice(startIndex, matchIndex));
+      }
+
+      const matchedText = text.slice(matchIndex, matchIndex + trimmedQuery.length);
+      segments.push(
+        <mark
+          key={segments.length}
+          className="bg-yellow-200 dark:bg-yellow-500/40 text-slate-900 dark:text-slate-900 rounded px-0.5"
+        >
+          {matchedText}
+        </mark>
+      );
+
+      startIndex = matchIndex + trimmedQuery.length;
+      matchIndex = lowerText.indexOf(lowerQuery, startIndex);
+    }
+
+    if (startIndex < text.length) {
+      segments.push(text.slice(startIndex));
+    }
+
+    return segments;
+  };
 
   const handleRefresh = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -96,7 +137,7 @@ const PlatformCard: React.FC<PlatformCardProps> = ({
         
         {data && !loading && !error && (
           <div className="space-y-1.5">
-            {data.topics.slice(0, 8).map((topic, index) => (
+            {filteredTopics.slice(0, visibleTopicCount).map((topic, index) => (
               <a
                 key={index}
                 href={topic.url}
@@ -110,7 +151,7 @@ const PlatformCard: React.FC<PlatformCardProps> = ({
                       {topic.rank}
                     </span>
                     <p className="text-slate-800 dark:text-slate-200 font-medium text-sm leading-snug group-hover/link:text-blue-600 dark:group-hover/link:text-blue-400 transition-colors duration-200 line-clamp-1 flex-1">
-                      {topic.title}
+                      {highlightText(topic.title, searchQuery)}
                     </p>
                   </div>
                   <div className="flex items-center space-x-2 ml-3 flex-shrink-0">
@@ -139,10 +180,17 @@ const PlatformCard: React.FC<PlatformCardProps> = ({
               </a>
             ))}
             
-            {data.topics.length > 8 && (
+            {searchQuery && filteredTopics.length === 0 && (
+              <div className="flex flex-col items-center justify-center py-6 text-center text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-700/40 rounded-lg">
+                <p className="text-sm font-medium">无匹配结果</p>
+                <p className="text-xs mt-1">尝试调整关键词或查看其他平台</p>
+              </div>
+            )}
+
+            {!searchQuery && data.topics.length > visibleTopicCount && (
               <div className="text-center pt-2">
                 <span className="text-slate-500 dark:text-slate-400 text-sm">
-                  +{data.topics.length - 8} more topics
+                  +{data.topics.length - visibleTopicCount} more topics
                 </span>
               </div>
             )}

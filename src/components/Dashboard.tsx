@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import PlatformCard from './PlatformCard';
 import ThemeToggle from './ThemeToggle';
-import { PlatformData } from '../types';
+import { HotTopic, PlatformData } from '../types';
 import { ApiService } from '../services/api';
 
 interface DashboardProps {
@@ -12,6 +12,48 @@ interface DashboardProps {
 
 const Dashboard: React.FC<DashboardProps> = ({ platforms, onPlatformsChange, lastUpdated }) => {
   const [draggedPlatform, setDraggedPlatform] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const normalizedQuery = searchQuery.trim().toLowerCase();
+
+  const filteredTopicsMap = useMemo(() => {
+    const map: Record<string, HotTopic[]> = {};
+
+    platforms.forEach(platform => {
+      const topics = platform.data?.topics ?? [];
+      map[platform.platform] = normalizedQuery
+        ? topics.filter(topic => topic.title.toLowerCase().includes(normalizedQuery))
+        : topics;
+    });
+
+    return map;
+  }, [platforms, normalizedQuery]);
+
+  const crossPlatformSummary = useMemo(() => {
+    if (!normalizedQuery) return null;
+
+    const topicPlatformMap = new Map<string, Set<string>>();
+    let totalMatches = 0;
+
+    platforms.forEach(platform => {
+      const filteredTopics = filteredTopicsMap[platform.platform] ?? [];
+      totalMatches += filteredTopics.length;
+
+      filteredTopics.forEach(topic => {
+        const key = topic.title.trim().toLowerCase();
+        const existingSet = topicPlatformMap.get(key) ?? new Set<string>();
+        existingSet.add(platform.displayName);
+        topicPlatformMap.set(key, existingSet);
+      });
+    });
+
+    const crossPlatformMatches = Array.from(topicPlatformMap.values()).filter(set => set.size > 1).length;
+
+    return {
+      totalMatches,
+      crossPlatformMatches
+    };
+  }, [filteredTopicsMap, normalizedQuery, platforms]);
 
   const formatAbsoluteTime = (timestamp: number) =>
     new Intl.DateTimeFormat('zh-CN', {
@@ -149,12 +191,51 @@ const Dashboard: React.FC<DashboardProps> = ({ platforms, onPlatformsChange, las
 
       {/* Main Content */}
       <main className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
+        <div className="flex flex-col gap-4 mb-6">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+            <div className="relative w-full lg:max-w-md">
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="搜索话题关键词，支持跨平台匹配"
+                className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-4 py-2.5 text-sm sm:text-base text-slate-800 dark:text-slate-100 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className="absolute inset-y-0 right-3 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                  aria-label="清除搜索"
+                >
+                  ×
+                </button>
+              )}
+            </div>
+
+            {crossPlatformSummary && (
+              <div className="flex flex-wrap items-center gap-3 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-200 px-4 py-3 rounded-lg border border-blue-100 dark:border-blue-800/50 shadow-sm">
+                <div className="text-sm sm:text-base font-semibold">跨平台匹配数</div>
+                <div className="flex items-center gap-2 text-xs sm:text-sm">
+                  <span className="px-2 py-1 rounded-full bg-white/70 dark:bg-blue-900/50 font-medium">
+                    总匹配 {crossPlatformSummary.totalMatches}
+                  </span>
+                  <span className="px-2 py-1 rounded-full bg-white/70 dark:bg-blue-900/50 font-medium">
+                    跨平台重合 {crossPlatformSummary.crossPlatformMatches}
+                  </span>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
         {/* Grid Layout */}
         <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
           {platforms.map((platform) => (
-            <PlatformCard 
-              key={platform.platform} 
+            <PlatformCard
+              key={platform.platform}
               platformData={platform}
+              filteredTopics={filteredTopicsMap[platform.platform] ?? []}
+              searchQuery={searchQuery}
               onRefresh={handleRefresh}
               onDragStart={handleDragStart}
               onDragEnd={handleDragEnd}
