@@ -61,7 +61,8 @@ const PlatformCard: React.FC<PlatformCardProps> = ({
     return segments;
   };
 
-  const topicsToDisplay = searchQuery
+  const trimmedSearchQuery = searchQuery.trim();
+  const topicsToDisplay = trimmedSearchQuery
     ? filteredTopics
     : filteredTopics.slice(0, visibleTopicCount);
 
@@ -184,14 +185,14 @@ const PlatformCard: React.FC<PlatformCardProps> = ({
               </a>
             ))}
             
-            {searchQuery && filteredTopics.length === 0 && (
+            {trimmedSearchQuery && filteredTopics.length === 0 && (
               <div className="flex flex-col items-center justify-center py-6 text-center text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-700/40 rounded-lg">
                 <p className="text-sm font-medium">无匹配结果</p>
                 <p className="text-xs mt-1">尝试调整关键词或查看其他平台</p>
               </div>
             )}
 
-            {!searchQuery && data.topics.length > visibleTopicCount && (
+            {!trimmedSearchQuery && data.topics.length > visibleTopicCount && (
               <div className="text-center pt-2">
                 <span className="text-slate-500 dark:text-slate-400 text-sm">
                   +{data.topics.length - visibleTopicCount} more topics
