@@ -62,9 +62,15 @@ const PlatformCard: React.FC<PlatformCardProps> = ({
   };
 
   const trimmedSearchQuery = searchQuery.trim();
-  const topicsToDisplay = trimmedSearchQuery
+  const isSearching = trimmedSearchQuery.length > 0;
+
+  const topicsToDisplay = isSearching
     ? filteredTopics
     : filteredTopics.slice(0, visibleTopicCount);
+
+  const remainingTopicCount = isSearching
+    ? 0
+    : Math.max((data?.topics.length ?? 0) - topicsToDisplay.length, 0);
 
   const handleRefresh = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -192,10 +198,10 @@ const PlatformCard: React.FC<PlatformCardProps> = ({
               </div>
             )}
 
-            {!trimmedSearchQuery && data.topics.length > visibleTopicCount && (
+            {!isSearching && remainingTopicCount > 0 && (
               <div className="text-center pt-2">
                 <span className="text-slate-500 dark:text-slate-400 text-sm">
-                  +{data.topics.length - visibleTopicCount} more topics
+                  +{remainingTopicCount} more topics
                 </span>
               </div>
             )}
