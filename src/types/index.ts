@@ -12,6 +12,13 @@ export interface PlatformResponse {
   timestamp: number;
 }
 
+export type ApiErrorType = 'timeout' | 'network' | 'http' | 'retry-exhausted' | 'unknown';
+
+export interface ErrorInfo {
+  message: string;
+  type: ApiErrorType;
+}
+
 export interface PlatformData {
   platform: string;
   displayName: string;
@@ -19,5 +26,5 @@ export interface PlatformData {
   color: string;
   data: PlatformResponse | null;
   loading: boolean;
-  error: string | null;
+  error: ErrorInfo | null;
 }

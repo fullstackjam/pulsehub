@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import PlatformCard from './PlatformCard';
 import ThemeToggle from './ThemeToggle';
-import { PlatformData } from '../types';
-import { ApiService } from '../services/api';
+import { ErrorInfo, PlatformData } from '../types';
+import { ApiRequestError, ApiService } from '../services/api';
 
 interface DashboardProps {
   platforms: PlatformData[];
@@ -48,20 +48,39 @@ const Dashboard: React.FC<DashboardProps> = ({ platforms, onPlatformsChange, las
     return `${absoluteTime}${relativeTime ? ` (${relativeTime})` : ''}`;
   };
 
+  const buildErrorInfo = (error: ApiRequestError | Error): ErrorInfo => {
+    if (error instanceof ApiRequestError) {
+      if (error.type === 'timeout' || error.type === 'retry-exhausted') {
+        return { message: 'Request timed out or failed after retries. Please retry.', type: error.type };
+      }
+
+      if (error.type === 'network') {
+        return { message: 'Network issue detected. Try refreshing.', type: error.type };
+      }
+
+      return { message: error.message, type: error.type };
+    }
+
+    return { message: 'Refresh failed', type: 'unknown' };
+  };
+
   const handleRefresh = async (platform: string) => {
     try {
       const data = await ApiService.fetchPlatformData(platform);
-      const updatedPlatforms = platforms.map(p => 
-        p.platform === platform 
+      const updatedPlatforms = platforms.map(p =>
+        p.platform === platform
           ? { ...p, data, loading: false, error: null }
           : p
       );
       onPlatformsChange?.(updatedPlatforms);
     } catch (error) {
       console.error(`Error refreshing ${platform}:`, error);
-      const updatedPlatforms = platforms.map(p => 
-        p.platform === platform 
-          ? { ...p, loading: false, error: 'Refresh failed' }
+      const apiError = error instanceof ApiRequestError
+        ? error
+        : new ApiRequestError('Refresh failed', 'unknown', false);
+      const updatedPlatforms = platforms.map(p =>
+        p.platform === platform
+          ? { ...p, loading: false, error: buildErrorInfo(apiError) }
           : p
       );
       onPlatformsChange?.(updatedPlatforms);
