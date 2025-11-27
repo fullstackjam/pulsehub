@@ -7,10 +7,46 @@ import { ApiService } from '../services/api';
 interface DashboardProps {
   platforms: PlatformData[];
   onPlatformsChange?: (platforms: PlatformData[]) => void;
+  lastUpdated?: number | null;
 }
 
-const Dashboard: React.FC<DashboardProps> = ({ platforms, onPlatformsChange }) => {
+const Dashboard: React.FC<DashboardProps> = ({ platforms, onPlatformsChange, lastUpdated }) => {
   const [draggedPlatform, setDraggedPlatform] = useState<string | null>(null);
+
+  const formatAbsoluteTime = (timestamp: number) =>
+    new Intl.DateTimeFormat('zh-CN', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit'
+    }).format(timestamp);
+
+  const formatRelativeTime = (timestamp: number) => {
+    const diffMs = Date.now() - timestamp;
+    const minutes = Math.round(diffMs / 60000);
+    const formatter = new Intl.RelativeTimeFormat('zh-CN', { numeric: 'auto' });
+
+    if (minutes < 1) return formatter.format(0, 'minute');
+
+    if (minutes < 60) return formatter.format(-minutes, 'minute');
+
+    const hours = Math.round(minutes / 60);
+    if (hours < 24) return formatter.format(-hours, 'hour');
+
+    const days = Math.round(hours / 24);
+    return formatter.format(-days, 'day');
+  };
+
+  const renderLastUpdated = () => {
+    if (!lastUpdated) return '—';
+
+    const absoluteTime = formatAbsoluteTime(lastUpdated);
+    const relativeTime = formatRelativeTime(lastUpdated);
+
+    return `${absoluteTime}${relativeTime ? ` (${relativeTime})` : ''}`;
+  };
 
   const handleRefresh = async (platform: string) => {
     try {
@@ -81,7 +117,7 @@ const Dashboard: React.FC<DashboardProps> = ({ platforms, onPlatformsChange }) =
               <div className="text-left lg:text-right">
                 <div className="text-slate-300 dark:text-slate-200 text-xs sm:text-sm mb-1">Last Updated</div>
                 <div className="text-white font-medium text-sm sm:text-base">
-                  {new Date().toLocaleString()}
+                  {renderLastUpdated()}
                 </div>
               </div>
               

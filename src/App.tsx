@@ -52,10 +52,24 @@ const PLATFORM_CONFIG = [
 function App() {
   const [platforms, setPlatforms] = useState<PlatformData[]>([]);
   const [loading, setLoading] = useState(true);
+  const [lastUpdated, setLastUpdated] = useState<number | null>(null);
 
   useEffect(() => {
     initializePlatforms();
   }, []);
+
+  useEffect(() => {
+    const timestamps = platforms
+      .map(platform => platform.data?.timestamp)
+      .filter((timestamp): timestamp is number => typeof timestamp === 'number');
+
+    if (timestamps.length === 0) {
+      setLastUpdated(null);
+      return;
+    }
+
+    setLastUpdated(Math.max(...timestamps));
+  }, [platforms]);
 
   const initializePlatforms = () => {
     const initialPlatforms: PlatformData[] = PLATFORM_CONFIG.map(config => ({
@@ -133,9 +147,10 @@ function App() {
   return (
     <ThemeProvider>
       <div className="App">
-        <Dashboard 
-          platforms={platforms} 
+        <Dashboard
+          platforms={platforms}
           onPlatformsChange={setPlatforms}
+          lastUpdated={lastUpdated}
         />
         
         {/* Refresh Button */}
