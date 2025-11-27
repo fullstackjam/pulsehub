@@ -1,9 +1,57 @@
-import { PlatformResponse } from '../types';
+import { ApiErrorType, PlatformResponse } from '../types';
 
 const API_BASE_URL = 'https://60s.viki.moe';
 
+export class ApiRequestError extends Error {
+  type: ApiErrorType;
+  retryable: boolean;
+
+  constructor(message: string, type: ApiErrorType = 'unknown', retryable = false) {
+    super(message);
+    this.name = 'ApiRequestError';
+    this.type = type;
+    this.retryable = retryable;
+  }
+}
+
 export class ApiService {
+  private static async withRetry<T>(
+    fn: () => Promise<T>,
+    options: { retries?: number; baseDelay?: number } = {}
+  ): Promise<T> {
+    const { retries = 2, baseDelay = 700 } = options;
+    let attempt = 0;
+
+    while (attempt <= retries) {
+      try {
+        return await fn();
+      } catch (error) {
+        const apiError =
+          error instanceof ApiRequestError
+            ? error
+            : new ApiRequestError('Unknown error occurred', 'unknown', false);
+
+        const shouldRetry = apiError.retryable && attempt < retries;
+
+        if (!shouldRetry) {
+          throw apiError.type === 'unknown'
+            ? new ApiRequestError(apiError.message, apiError.type, apiError.retryable)
+            : apiError;
+        }
+
+        const delay = baseDelay * Math.pow(2, attempt);
+        await new Promise(resolve => setTimeout(resolve, delay));
+        attempt += 1;
+      }
+    }
+
+    throw new ApiRequestError('Failed after maximum retry attempts', 'retry-exhausted', false);
+  }
+
   private static async fetchFrom60sAPI(endpoint: string): Promise<any> {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 9000);
+
     try {
       const response = await fetch(`${API_BASE_URL}${endpoint}`, {
         method: 'GET',
@@ -12,16 +60,31 @@ export class ApiService {
           'Accept': 'application/json',
         },
         mode: 'cors',
+        signal: controller.signal
       });
-      
+
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        throw new ApiRequestError(
+          `HTTP error! status: ${response.status}`,
+          'http',
+          response.status >= 500
+        );
       }
-      
+
       return response.json();
     } catch (error) {
       console.error(`Error fetching from 60s API ${endpoint}:`, error);
-      throw new Error(`Failed to fetch data from ${endpoint}`);
+      if (error instanceof ApiRequestError) {
+        throw error;
+      }
+
+      if ((error as Error)?.name === 'AbortError') {
+        throw new ApiRequestError('Request timed out. Please try again.', 'timeout', true);
+      }
+
+      throw new ApiRequestError(`Failed to fetch data from ${endpoint}`, 'network', true);
+    } finally {
+      clearTimeout(timeout);
     }
   }
 
@@ -40,7 +103,10 @@ export class ApiService {
       throw new Error(`Platform ${platform} is not supported by the API`);
     }
 
-    const data = await this.fetchFrom60sAPI(endpoint);
+    const data = await this.withRetry(
+      () => this.fetchFrom60sAPI(endpoint),
+      { retries: 2, baseDelay: 800 }
+    );
     return this.transformData(platform, data);
   }
 
@@ -81,21 +147,27 @@ export class ApiService {
   }
 
 
-  static async fetchAllPlatforms(): Promise<Record<string, PlatformResponse>> {
+  private static async fetchAllPlatformsOnce(): Promise<{ data: Record<string, PlatformResponse>; errors: Record<string, ApiRequestError | null> }> {
     const platforms = ['weibo', 'douyin', 'bilibili', 'zhihu', 'baidu', 'toutiao'];
-    
+
+    const errors: Record<string, ApiRequestError | null> = {};
     const promises = platforms.map(async (platform) => {
       try {
         const data = await this.fetchPlatformData(platform);
-        return { platform, data };
+        return { platform, data, error: null };
       } catch (error) {
         console.error(`Error fetching ${platform}:`, error);
-        return { platform, data: null };
+        const apiError =
+          error instanceof ApiRequestError
+            ? error
+            : new ApiRequestError(`Failed to fetch data from ${platform}`, 'unknown', false);
+        errors[platform] = apiError;
+        return { platform, data: null, error: apiError };
       }
     });
 
     const results = await Promise.all(promises);
-    
+
     const platformData = results.reduce((acc, { platform, data }) => {
       if (data) {
         acc[platform] = data;
@@ -103,13 +175,32 @@ export class ApiService {
       return acc;
     }, {} as Record<string, PlatformResponse>);
 
-    // Generate aggregated hot topics
     const aggregatedData = this.generateAggregatedHotTopics(platformData);
     if (aggregatedData) {
       platformData['aggregated'] = aggregatedData;
+      errors['aggregated'] = null;
+    } else if (Object.keys(platformData).length > 0) {
+      errors['aggregated'] = new ApiRequestError('Aggregated data unavailable', 'unknown', false);
     }
 
-    return platformData;
+    results.forEach(({ platform }) => {
+      if (!(platform in errors)) {
+        errors[platform] = null;
+      }
+    });
+
+    if (Object.keys(platformData).length === 0) {
+      throw new ApiRequestError('All platform requests failed after retries', 'retry-exhausted', true);
+    }
+
+    return { data: platformData, errors };
+  }
+
+  static async fetchAllPlatforms(): Promise<{ data: Record<string, PlatformResponse>; errors: Record<string, ApiRequestError | null> }> {
+    return this.withRetry(
+      () => this.fetchAllPlatformsOnce(),
+      { retries: 2, baseDelay: 900 }
+    );
   }
 
   static generateAggregatedHotTopics(platformData: Record<string, PlatformResponse>): PlatformResponse | null {
