@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import Dashboard from './components/Dashboard';
 import { ThemeProvider } from './contexts/ThemeContext';
-import { PlatformData } from './types';
-import { ApiService } from './services/api';
+import { ErrorInfo, PlatformData } from './types';
+import { ApiRequestError, ApiService } from './services/api';
 
 const PLATFORM_CONFIG = [
   {
@@ -86,28 +86,55 @@ function App() {
     fetchAllData(initialPlatforms);
   };
 
+  const buildErrorInfo = (error: ApiRequestError | Error): ErrorInfo => {
+    if (error instanceof ApiRequestError) {
+      if (error.type === 'timeout' || error.type === 'retry-exhausted') {
+        return { message: 'Request timed out or failed after retries. Please retry.', type: error.type };
+      }
+
+      if (error.type === 'network') {
+        return { message: 'Network connection failed. Please check and try again.', type: error.type };
+      }
+
+      return { message: error.message, type: error.type };
+    }
+
+    return { message: 'Unexpected error occurred', type: 'unknown' };
+  };
+
   const fetchAllData = async (platformList: PlatformData[]) => {
     try {
-      const data = await ApiService.fetchAllPlatforms();
-      
+      const { data, errors } = await ApiService.fetchAllPlatforms();
+      const fallbackError: ErrorInfo = { message: 'Data fetch failed', type: 'unknown' };
+
       const updatedPlatforms = platformList.map(platform => {
         const platformData = data[platform.platform];
+        const platformError = errors[platform.platform];
         return {
           ...platform,
           data: platformData || null,
           loading: false,
-          error: platformData ? null : 'Data fetch failed'
+          error: platformData
+            ? null
+            : platformError
+              ? buildErrorInfo(platformError)
+              : fallbackError
         };
       });
 
       setPlatforms(updatedPlatforms);
     } catch (error) {
       console.error('Error fetching platform data:', error);
-      
+
+      const apiError = error instanceof ApiRequestError
+        ? error
+        : new ApiRequestError('Network connection failed', 'network', true);
+
       const updatedPlatforms = platformList.map(platform => ({
         ...platform,
         loading: false,
-        error: 'Network connection failed'
+        data: null,
+        error: buildErrorInfo(apiError)
       }));
 
       setPlatforms(updatedPlatforms);

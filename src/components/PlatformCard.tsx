@@ -20,6 +20,8 @@ const PlatformCard: React.FC<PlatformCardProps> = ({
 }) => {
   const { platform, displayName, icon, color, data, loading, error } = platformData;
 
+  const isTimeoutOrRetryError = error?.type === 'timeout' || error?.type === 'retry-exhausted' || error?.type === 'network';
+
   const handleRefresh = (e: React.MouseEvent) => {
     e.stopPropagation();
     onRefresh(platform);
@@ -89,8 +91,19 @@ const PlatformCard: React.FC<PlatformCardProps> = ({
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
               </svg>
             </div>
-            <p className="text-red-600 dark:text-red-400 font-medium mb-1 sm:mb-2 text-sm sm:text-base">Data fetch failed</p>
-            <p className="text-red-500 dark:text-red-300 text-xs sm:text-sm">{error}</p>
+            <p className="text-red-600 dark:text-red-400 font-medium mb-1 sm:mb-2 text-sm sm:text-base">
+              {isTimeoutOrRetryError ? 'Request timed out or retry limit reached' : 'Data fetch failed'}
+            </p>
+            <p className="text-red-500 dark:text-red-300 text-xs sm:text-sm mb-2">{error.message}</p>
+            {isTimeoutOrRetryError && (
+              <button
+                onClick={handleRefresh}
+                disabled={loading}
+                className="px-3 py-1.5 bg-red-500 hover:bg-red-600 text-white text-xs sm:text-sm rounded-md transition-colors duration-200"
+              >
+                Retry now
+              </button>
+            )}
           </div>
         )}
         
