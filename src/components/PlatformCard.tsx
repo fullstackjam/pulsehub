@@ -61,6 +61,10 @@ const PlatformCard: React.FC<PlatformCardProps> = ({
     return segments;
   };
 
+  const topicsToDisplay = searchQuery
+    ? filteredTopics
+    : filteredTopics.slice(0, visibleTopicCount);
+
   const handleRefresh = (e: React.MouseEvent) => {
     e.stopPropagation();
     onRefresh(platform);
@@ -137,7 +141,7 @@ const PlatformCard: React.FC<PlatformCardProps> = ({
         
         {data && !loading && !error && (
           <div className="space-y-1.5">
-            {filteredTopics.slice(0, visibleTopicCount).map((topic, index) => (
+            {topicsToDisplay.map((topic, index) => (
               <a
                 key={index}
                 href={topic.url}
