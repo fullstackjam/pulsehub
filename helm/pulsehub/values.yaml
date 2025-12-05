@@ -41,21 +41,22 @@ rollout:
         canaryByHeader: X-Canary     # Header for testing canary version
     
     # Canary steps - progressive traffic shifting
+    # Each step can only have ONE action (setWeight OR pause, not both)
     steps:
       - setWeight: 10                # 10% traffic to canary
-        pause:
+      - pause:
           duration: 2m               # Wait 2 minutes
       - setWeight: 20                # 20% traffic to canary
-        pause:
+      - pause:
           duration: 2m
       - setWeight: 40                # 40% traffic to canary
-        pause:
+      - pause:
           duration: 2m
       - setWeight: 60                # 60% traffic to canary
-        pause:
+      - pause:
           duration: 2m
       - setWeight: 80                # 80% traffic to canary
-        pause:
+      - pause:
           duration: 2m
       # Final step: 100% to canary (automatic)
     
