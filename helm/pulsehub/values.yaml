@@ -62,11 +62,12 @@ rollout:
     
     # Analysis configuration (optional, requires AnalysisTemplate)
     analysis:
-      enabled: false
+      enabled: true                  # ✅ Enable automated analysis
+      prometheusAddress: http://monitoring-system-kube-pro-prometheus.monitoring-system.svc.cluster.local:9090
       templates:
         - templateName: success-rate
         - templateName: latency
-      startingStep: 1
+      startingStep: 1                # Start analysis from step 1
       args:
         - name: service-name
           value: pulsehub
