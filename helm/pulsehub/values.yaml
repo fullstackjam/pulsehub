@@ -76,3 +76,13 @@ rollout:
   blueGreen:
     autoPromotionEnabled: false
     scaleDownDelaySeconds: 30
+
+# ServiceMonitor for Prometheus
+serviceMonitor:
+  enabled: true
+  interval: 30s
+  scrapeTimeout: 10s
+  # Add labels that match your Prometheus serviceMonitorSelector
+  # Check with: kubectl get prometheus -A -o yaml | grep serviceMonitorSelector
+  labels:
+    release: monitoring-system  # Common label for kube-prometheus-stack

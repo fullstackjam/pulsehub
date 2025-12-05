@@ -1,6 +1,6 @@
-# Multi-stage build for React frontend application
+# Multi-stage build for fullstack application with backend metrics
 
-# Stage 1: Build the application
+# Stage 1: Build the React frontend
 FROM node:18-alpine AS builder
 
 WORKDIR /app
@@ -14,29 +14,25 @@ RUN npm ci --silent
 # Copy source code
 COPY . .
 
-# Build the application
+# Build the frontend application
 RUN npm run build
 
-# Stage 2: Serve the application with nginx
-FROM nginx:alpine
+# Stage 2: Production stage with Node.js backend
+FROM node:18-alpine
 
-# Copy built files from builder stage
-COPY --from=builder /app/dist /usr/share/nginx/html
+WORKDIR /app
 
-# Create nginx config
-RUN echo 'server { \
-    listen 80; \
-    server_name localhost; \
-    root /usr/share/nginx/html; \
-    index index.html; \
-    location / { \
-        try_files $uri $uri/ /index.html; \
-    } \
-    location /health { \
-        return 200 "healthy\\n"; \
-        add_header Content-Type text/plain; \
-    } \
-}' > /etc/nginx/conf.d/default.conf
+# Copy package files
+COPY package*.json ./
+
+# Install only production dependencies
+RUN npm ci --only=production --silent
+
+# Copy built frontend from builder
+COPY --from=builder /app/dist ./dist
+
+# Copy backend server
+COPY server ./server
 
 # Expose port 80
 EXPOSE 80
@@ -45,5 +41,5 @@ EXPOSE 80
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
   CMD wget --no-verbose --tries=1 --spider http://localhost/health || exit 1
 
-# Start nginx
-CMD ["nginx", "-g", "daemon off;"]
+# Start the backend server
+CMD ["node", "server/index.js"]
