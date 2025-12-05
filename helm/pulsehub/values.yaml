@@ -62,7 +62,7 @@ rollout:
     
     # Analysis configuration (optional, requires AnalysisTemplate)
     analysis:
-      enabled: false                 # ⚠️ Disabled until monitoring is set up
+      enabled: true                 # ⚠️ Disabled until monitoring is set up
       prometheusAddress: http://monitoring-system-kube-pro-prometheus.monitoring-system.svc.cluster.local:9090
       templates:
         - templateName: success-rate
