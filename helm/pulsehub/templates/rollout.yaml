@@ -67,7 +67,7 @@ spec:
         {{- end }}
         {{- end }}
       # Analysis during canary
-      {{- if .Values.rollout.canary.analysis }}
+      {{- if and .Values.rollout.canary.analysis .Values.rollout.canary.analysis.enabled }}
       analysis:
         templates:
           {{- range .Values.rollout.canary.analysis.templates }}
