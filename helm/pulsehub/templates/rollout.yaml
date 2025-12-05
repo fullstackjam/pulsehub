@@ -57,13 +57,14 @@ spec:
       # Canary steps
       steps:
         {{- range .Values.rollout.canary.steps }}
+        {{- if .setWeight }}
         - setWeight: {{ .setWeight }}
-          {{- if .pause }}
-          pause:
+        {{- else if .pause }}
+        - pause:
             {{- if .pause.duration }}
             duration: {{ .pause.duration }}
             {{- end }}
-          {{- end }}
+        {{- end }}
         {{- end }}
       # Analysis during canary
       {{- if .Values.rollout.canary.analysis }}
