@@ -6,13 +6,71 @@ app:
   name: pulsehub                    # Change this to your app name (also used as namespace)
 
 # Deployment configuration
-replicaCount: 1
+replicaCount: 3
 
 # Container image
 image:
   repository: fullstackjam/pulsehub  # Change this to your image repository
   tag: latest                        # Change this to your image tag
 
+# Resource limits
+resources:
+  limits:
+    memory: 128Mi
+  requests:
+    memory: 64Mi
+
 # Ingress configuration
 ingress:
   host: pulsehub.fullstackjam.com   # Change this to your domain
+
+# Argo Rollout configuration
+rollout:
+  # Revision history limit
+  revisionHistoryLimit: 3
+  
+  # Canary deployment configuration
+  canary:
+    enabled: true                    # Set to false to use blue-green strategy
+    canaryService: true              # Create a separate canary service for testing
+    
+    # Traffic routing
+    trafficRouting:
+      type: nginx                    # Options: nginx, istio
+      nginx:
+        canaryByHeader: X-Canary     # Header for testing canary version
+    
+    # Canary steps - progressive traffic shifting
+    steps:
+      - setWeight: 10                # 10% traffic to canary
+        pause:
+          duration: 2m               # Wait 2 minutes
+      - setWeight: 20                # 20% traffic to canary
+        pause:
+          duration: 2m
+      - setWeight: 40                # 40% traffic to canary
+        pause:
+          duration: 2m
+      - setWeight: 60                # 60% traffic to canary
+        pause:
+          duration: 2m
+      - setWeight: 80                # 80% traffic to canary
+        pause:
+          duration: 2m
+      # Final step: 100% to canary (automatic)
+    
+    # Analysis configuration (optional, requires AnalysisTemplate)
+    analysis:
+      enabled: false
+      templates:
+        - templateName: success-rate
+        - templateName: latency
+      startingStep: 1
+      args:
+        - name: service-name
+          value: pulsehub
+  
+  # Blue-Green deployment configuration (alternative to canary)
+  blueGreen:
+    autoPromotionEnabled: false
+    scaleDownDelaySeconds: 30

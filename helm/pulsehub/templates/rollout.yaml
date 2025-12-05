@@ -1,0 +1,93 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: {{ .Values.app.name }}
+  labels:
+    {{- include "pulsehub.commonLabels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  revisionHistoryLimit: {{ .Values.rollout.revisionHistoryLimit | default 3 }}
+  selector:
+    matchLabels:
+      {{- include "pulsehub.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "pulsehub.commonLabels" . | nindent 8 }}
+    spec:
+      containers:
+        - name: {{ .Values.app.name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          ports:
+            - containerPort: 80
+              protocol: TCP
+              name: http
+          resources:
+            limits:
+              memory: {{ .Values.resources.limits.memory | default "128Mi" }}
+            requests:
+              memory: {{ .Values.resources.requests.memory | default "64Mi" }}
+  strategy:
+    {{- if .Values.rollout.canary.enabled }}
+    canary:
+      # Canary service (optional, for testing canary version)
+      {{- if .Values.rollout.canary.canaryService }}
+      canaryService: {{ .Values.app.name }}-canary
+      {{- end }}
+      # Stable service
+      stableService: {{ .Values.app.name }}
+      # Traffic routing
+      {{- if .Values.rollout.canary.trafficRouting }}
+      trafficRouting:
+        {{- if eq .Values.rollout.canary.trafficRouting.type "nginx" }}
+        nginx:
+          stableIngress: {{ .Values.app.name }}
+          {{- if .Values.rollout.canary.canaryService }}
+          additionalIngressAnnotations:
+            canary-by-header: {{ .Values.rollout.canary.trafficRouting.nginx.canaryByHeader | default "X-Canary" }}
+          {{- end }}
+        {{- else if eq .Values.rollout.canary.trafficRouting.type "istio" }}
+        istio:
+          virtualService:
+            name: {{ .Values.app.name }}
+            routes:
+              - primary
+        {{- end }}
+      {{- end }}
+      # Canary steps
+      steps:
+        {{- range .Values.rollout.canary.steps }}
+        - setWeight: {{ .setWeight }}
+          {{- if .pause }}
+          pause:
+            {{- if .pause.duration }}
+            duration: {{ .pause.duration }}
+            {{- end }}
+          {{- end }}
+        {{- end }}
+      # Analysis during canary
+      {{- if .Values.rollout.canary.analysis }}
+      analysis:
+        templates:
+          {{- range .Values.rollout.canary.analysis.templates }}
+          - templateName: {{ .templateName }}
+          {{- end }}
+        startingStep: {{ .Values.rollout.canary.analysis.startingStep | default 1 }}
+        {{- if .Values.rollout.canary.analysis.args }}
+        args:
+          {{- range .Values.rollout.canary.analysis.args }}
+          - name: {{ .name }}
+            value: {{ .value | quote }}
+          {{- end }}
+        {{- end }}
+      {{- end }}
+    {{- else }}
+    # Blue-Green strategy (alternative)
+    blueGreen:
+      activeService: {{ .Values.app.name }}
+      previewService: {{ .Values.app.name }}-preview
+      autoPromotionEnabled: {{ .Values.rollout.blueGreen.autoPromotionEnabled | default false }}
+      {{- if .Values.rollout.blueGreen.scaleDownDelaySeconds }}
+      scaleDownDelaySeconds: {{ .Values.rollout.blueGreen.scaleDownDelaySeconds }}
+      {{- end }}
+    {{- end }}
