@@ -1,5 +1,6 @@
 'use client'
 
+import { motion } from 'framer-motion'
 import { useTheme } from '@/providers/theme-provider'
 
 export function ThemeToggle() {
@@ -66,21 +67,26 @@ export function ThemeToggle() {
   }
 
   return (
-    <button
+    <motion.button
+      whileHover={{ scale: 1.05 }}
+      whileTap={{ scale: 0.95 }}
       onClick={toggleTheme}
-      className="theme-toggle group relative flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-white/10 dark:bg-white/5 backdrop-blur-sm border border-white/20 dark:border-white/10 hover:bg-white/20 dark:hover:bg-white/10 transition-all duration-300 hover:scale-105"
+      className="relative flex items-center justify-center w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors duration-200"
       title={getTooltip()}
     >
-      <div className="relative text-white">
+      <motion.div
+        key={theme}
+        initial={{ rotate: -90, opacity: 0 }}
+        animate={{ rotate: 0, opacity: 1 }}
+        exit={{ rotate: 90, opacity: 0 }}
+        transition={{ duration: 0.2 }}
+        className="text-slate-600 dark:text-slate-300"
+      >
         {getIcon()}
-        {theme === 'system' && (
-          <div className="absolute -top-1 -right-1 w-2 h-2 bg-blue-400 rounded-full animate-pulse"></div>
-        )}
-      </div>
-
-      <div className="absolute -bottom-1 -right-1 w-3 h-3 rounded-full border-2 border-white/30 dark:border-white/20 bg-gradient-to-br from-yellow-400 to-orange-500 dark:from-blue-400 dark:to-purple-500 flex items-center justify-center">
-        <div className="w-1.5 h-1.5 rounded-full bg-white/80"></div>
-      </div>
-    </button>
+      </motion.div>
+      {theme === 'system' && (
+        <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-indigo-500 rounded-full animate-pulse" />
+      )}
+    </motion.button>
   )
 }
