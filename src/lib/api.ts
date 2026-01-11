@@ -50,7 +50,7 @@ export class ApiService {
 
   private static async fetchFrom60sAPI(endpoint: string): Promise<unknown> {
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 9000);
+    const timeout = setTimeout(() => controller.abort(), 20000);
 
     try {
       const response = await fetch(`${API_BASE_URL}${endpoint}`, {
@@ -105,7 +105,7 @@ export class ApiService {
 
     const data = await this.withRetry(
       () => this.fetchFrom60sAPI(endpoint),
-      { retries: 2, baseDelay: 800 }
+      { retries: 1, baseDelay: 500 }
     );
     return this.transformData(platform, data);
   }
@@ -197,7 +197,7 @@ export class ApiService {
   static async fetchAllPlatforms(): Promise<{ data: Record<string, PlatformResponse>; errors: Record<string, ApiRequestError | null> }> {
     return this.withRetry(
       () => this.fetchAllPlatformsOnce(),
-      { retries: 2, baseDelay: 900 }
+      { retries: 1, baseDelay: 500 }
     );
   }
 
