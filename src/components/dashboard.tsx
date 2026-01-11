@@ -100,30 +100,33 @@ export function Dashboard({ platforms, onPlatformsChange, lastUpdated }: Dashboa
     }
   }
 
-  // Separate aggregated from other platforms
+  // Reorder: aggregated first, then others
   const aggregatedPlatform = platforms.find(p => p.platform === 'aggregated')
   const otherPlatforms = platforms.filter(p => p.platform !== 'aggregated')
+  const orderedPlatforms = aggregatedPlatform
+    ? [aggregatedPlatform, ...otherPlatforms]
+    : otherPlatforms
 
   return (
     <div className="min-h-screen bento-background">
       {/* Header */}
       <header className="header-modern relative z-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6">
+          <div className="flex items-center justify-between">
             {/* Logo */}
             <motion.div
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="flex items-center space-x-4"
+              className="flex items-center gap-3"
             >
-              <div className="logo-glow w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-2xl">
-                <span className="text-white text-xl sm:text-2xl font-bold">P</span>
+              <div className="logo-glow w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
+                <span className="text-white text-lg sm:text-xl font-bold">P</span>
               </div>
               <div>
-                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-slate-800 to-slate-600 dark:from-white dark:to-slate-300 bg-clip-text text-transparent">
+                <h1 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-slate-800 to-slate-600 dark:from-white dark:to-slate-300 bg-clip-text text-transparent">
                   PulseHub
                 </h1>
-                <p className="text-slate-500 dark:text-slate-400 text-sm sm:text-base">
+                <p className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm">
                   实时热点聚合
                 </p>
               </div>
@@ -134,12 +137,11 @@ export function Dashboard({ platforms, onPlatformsChange, lastUpdated }: Dashboa
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
-              className="flex items-center gap-4"
+              className="flex items-center gap-2 sm:gap-3"
             >
               {/* Last Updated */}
               {lastUpdated && (
-                <div className="text-sm text-slate-500 dark:text-slate-400">
-                  <span className="hidden sm:inline">更新于 </span>
+                <div className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 hidden sm:block">
                   {formatRelativeTime(lastUpdated)}
                 </div>
               )}
@@ -152,11 +154,11 @@ export function Dashboard({ platforms, onPlatformsChange, lastUpdated }: Dashboa
                 href="https://github.com/fullstackjam/pulsehub"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors duration-200"
-                title="View Source Code"
+                className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors duration-200"
+                title="GitHub"
               >
                 <svg
-                  className="w-5 h-5 sm:w-6 sm:h-6 text-slate-600 dark:text-slate-300"
+                  className="w-4 h-4 sm:w-5 sm:h-5 text-slate-600 dark:text-slate-300"
                   fill="currentColor"
                   viewBox="0 0 24 24"
                 >
@@ -169,26 +171,16 @@ export function Dashboard({ platforms, onPlatformsChange, lastUpdated }: Dashboa
       </header>
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-24 relative z-10">
-        {/* Bento Grid */}
+      <main className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 pb-20 relative z-10">
+        {/* Grid */}
         <div className="bento-grid">
-          {/* Featured Card - Aggregated */}
-          {aggregatedPlatform && (
-            <PlatformCard
-              platformData={aggregatedPlatform}
-              onRefresh={handleRefresh}
-              index={0}
-              isFeatured={true}
-            />
-          )}
-
-          {/* Other Platform Cards */}
-          {otherPlatforms.map((platform, index) => (
+          {orderedPlatforms.map((platform, index) => (
             <PlatformCard
               key={platform.platform}
               platformData={platform}
               onRefresh={handleRefresh}
-              index={index + 1}
+              index={index}
+              isFeatured={platform.platform === 'aggregated'}
             />
           ))}
         </div>
@@ -198,11 +190,11 @@ export function Dashboard({ platforms, onPlatformsChange, lastUpdated }: Dashboa
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="text-center py-16"
+            className="text-center py-12"
           >
             <div className="text-slate-400 dark:text-slate-500">
-              <p className="text-lg font-medium">暂无数据</p>
-              <p className="text-sm mt-2">请检查网络连接或稍后重试</p>
+              <p className="text-base font-medium">暂无数据</p>
+              <p className="text-sm mt-1">请检查网络连接或稍后重试</p>
             </div>
           </motion.div>
         )}

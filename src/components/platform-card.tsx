@@ -95,7 +95,7 @@ export function PlatformCard({
       </div>
 
       {/* Content */}
-      <div className={isFeatured ? 'min-h-[280px] sm:min-h-[380px]' : ''}>
+      <div>
         {error && (
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}

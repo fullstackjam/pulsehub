@@ -8,45 +8,45 @@ export const dynamic = 'force-dynamic'
 const PLATFORM_CONFIG = [
   {
     platform: 'weibo',
-    displayName: 'Weibo Hot Search',
+    displayName: '微博热搜',
     icon: 'W',
     color: '#ff6b35'
   },
   {
     platform: 'douyin',
-    displayName: 'Douyin Hot List',
+    displayName: '抖音热榜',
     icon: 'D',
-    color: '#000000'
+    color: '#161823'
   },
   {
     platform: 'bilibili',
-    displayName: 'Bilibili Hot List',
+    displayName: 'B站热榜',
     icon: 'B',
     color: '#00a1d6'
   },
   {
     platform: 'zhihu',
-    displayName: 'Zhihu Hot List',
+    displayName: '知乎热榜',
     icon: 'Z',
     color: '#0084ff'
   },
   {
     platform: 'baidu',
-    displayName: 'Baidu Hot Search',
+    displayName: '百度热搜',
     icon: 'B',
     color: '#2932e1'
   },
   {
     platform: 'toutiao',
-    displayName: 'Toutiao Hot List',
+    displayName: '头条热榜',
     icon: 'T',
     color: '#ff6600'
   },
   {
     platform: 'aggregated',
-    displayName: 'Aggregated Hot Topics',
+    displayName: '热点聚合',
     icon: '🔥',
-    color: '#ff6b35'
+    color: '#6366f1'
   }
 ]
 
