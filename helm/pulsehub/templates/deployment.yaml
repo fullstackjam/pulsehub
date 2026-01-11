@@ -18,7 +18,7 @@ spec:
         - name: {{ .Values.app.name }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           ports:
-            - containerPort: 80
+            - containerPort: 3000
               protocol: TCP
               name: http
           resources:
@@ -31,14 +31,14 @@ spec:
           livenessProbe:
             httpGet:
               path: /
-              port: 80
-            initialDelaySeconds: 5
+              port: 3000
+            initialDelaySeconds: 10
             periodSeconds: 30
-            timeoutSeconds: 3
+            timeoutSeconds: 5
           readinessProbe:
             httpGet:
               path: /
-              port: 80
-            initialDelaySeconds: 3
+              port: 3000
+            initialDelaySeconds: 5
             periodSeconds: 10
-            timeoutSeconds: 3
+            timeoutSeconds: 5
