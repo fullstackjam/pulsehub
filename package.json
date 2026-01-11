@@ -1,21 +1,18 @@
 {
   "name": "pulsehub",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "PulseHub - Web application that aggregates real-time hot topics from major social media platforms",
   "private": true,
-  "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "tsc && vite build",
-    "preview": "vite preview",
-    "start": "vite preview",
-    "deploy": "npm run build",
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
     "docker:build": "docker build -t pulsehub .",
-    "docker:run": "docker run -p 80:80 pulsehub",
+    "docker:run": "docker run -p 3000:3000 pulsehub",
     "helm:install": "helm install pulsehub ./helm/pulsehub",
     "helm:upgrade": "helm upgrade pulsehub ./helm/pulsehub",
-    "helm:uninstall": "helm uninstall pulsehub",
-    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0"
+    "helm:uninstall": "helm uninstall pulsehub"
   },
   "keywords": [
     "social-media",
@@ -25,29 +22,25 @@
     "bilibili",
     "zhihu",
     "baidu",
+    "nextjs",
     "react",
-    "typescript",
-    "vite"
+    "typescript"
   ],
   "author": "PulseHub Team",
   "license": "MIT",
   "dependencies": {
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "next": "^15.1.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
   },
   "devDependencies": {
-    "@types/react": "^18.2.43",
-    "@types/react-dom": "^18.2.17",
-    "@typescript-eslint/eslint-plugin": "^6.14.0",
-    "@typescript-eslint/parser": "^6.14.0",
-    "@vitejs/plugin-react": "^4.2.1",
-    "autoprefixer": "^10.4.16",
-    "eslint": "^8.55.0",
-    "eslint-plugin-react-hooks": "^4.6.0",
-    "eslint-plugin-react-refresh": "^0.4.5",
-    "postcss": "^8.4.32",
-    "tailwindcss": "^3.3.6",
-    "typescript": "^5.2.2",
-    "vite": "^5.0.8"
+    "@types/node": "^22.10.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "eslint": "^9.17.0",
+    "eslint-config-next": "^15.1.0",
+    "postcss": "^8.4.49",
+    "tailwindcss": "^3.4.17",
+    "typescript": "^5.7.2"
   }
 }
