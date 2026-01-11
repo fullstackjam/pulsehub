@@ -120,45 +120,21 @@ body {
 /* Bento Grid Layout */
 .bento-grid {
   display: grid;
-  gap: 0.75rem;
-  grid-template-columns: 1fr;
+  gap: 0.625rem;
+  grid-template-columns: repeat(2, 1fr);
 }
 
-@media (min-width: 640px) {
+@media (min-width: 768px) {
   .bento-grid {
     gap: 0.75rem;
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-@media (min-width: 1024px) {
-  .bento-grid {
-    gap: 0.875rem;
     grid-template-columns: repeat(3, 1fr);
   }
 }
 
-@media (min-width: 1400px) {
+@media (min-width: 1200px) {
   .bento-grid {
-    gap: 1rem;
+    gap: 0.75rem;
     grid-template-columns: repeat(4, 1fr);
-  }
-}
-
-/* Featured card spans - only span columns, not rows */
-.bento-featured {
-  grid-column: span 1;
-}
-
-@media (min-width: 640px) {
-  .bento-featured {
-    grid-column: span 2;
-  }
-}
-
-@media (min-width: 1400px) {
-  .bento-featured {
-    grid-column: span 2;
   }
 }
 

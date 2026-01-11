@@ -9,14 +9,12 @@ interface PlatformCardProps {
   platformData: PlatformData
   onRefresh: (platform: string) => void
   index?: number
-  isFeatured?: boolean
 }
 
 export function PlatformCard({
   platformData,
   onRefresh,
-  index = 0,
-  isFeatured = false
+  index = 0
 }: PlatformCardProps) {
   const { platform, displayName, icon, color, data, loading, error } = platformData
 
@@ -34,7 +32,7 @@ export function PlatformCard({
     return 'rank-badge rank-default'
   }
 
-  const maxTopics = isFeatured ? 10 : 7
+  const maxTopics = 8
 
   if (loading) {
     return <CardSkeleton />
@@ -45,27 +43,27 @@ export function PlatformCard({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{
-        duration: 0.5,
-        delay: index * 0.08,
+        duration: 0.4,
+        delay: index * 0.05,
         ease: [0.4, 0, 0.2, 1]
       }}
-      className={`bento-card ${isFeatured ? 'bento-featured bento-card-featured' : ''} p-4 sm:p-5`}
+      className="bento-card p-4"
     >
       {/* Header */}
-      <div className="flex items-center justify-between mb-3 sm:mb-4">
-        <div className="flex items-center gap-3">
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2.5">
           <div
-            className={`platform-icon flex-shrink-0 ${isFeatured ? 'w-11 h-11 sm:w-12 sm:h-12 text-lg sm:text-xl' : 'w-9 h-9 sm:w-10 sm:h-10 text-sm sm:text-base'}`}
+            className="platform-icon flex-shrink-0 w-9 h-9 text-sm"
             style={{ backgroundColor: color }}
           >
             {icon}
           </div>
           <div>
-            <h3 className={`font-bold text-slate-800 dark:text-slate-100 ${isFeatured ? 'text-base sm:text-lg' : 'text-sm sm:text-base'}`}>
+            <h3 className="font-bold text-slate-800 dark:text-slate-100 text-sm">
               {displayName}
             </h3>
-            <p className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm">
-              {data ? `${data.topics.length} topics` : 'No data'}
+            <p className="text-slate-500 dark:text-slate-400 text-xs">
+              {data ? `${data.topics.length} 条` : '暂无数据'}
             </p>
           </div>
         </div>
@@ -135,29 +133,27 @@ export function PlatformCard({
                 transition={{ delay: idx * 0.02 + 0.1 }}
                 className="topic-item block"
               >
-                <div className="flex items-center gap-2 sm:gap-3">
+                <div className="flex items-center gap-2">
                   <span className={getRankBadgeClass(topic.rank)}>
                     {topic.rank ?? idx + 1}
                   </span>
-                  <p className={`text-slate-700 dark:text-slate-200 font-medium leading-tight flex-1 min-w-0 ${isFeatured ? 'text-sm sm:text-base line-clamp-2' : 'text-xs sm:text-sm line-clamp-1'}`}>
+                  <p className="text-slate-700 dark:text-slate-200 font-medium leading-tight flex-1 min-w-0 text-xs line-clamp-1">
                     {topic.title}
                   </p>
-                  <div className="flex items-center gap-1.5 flex-shrink-0">
-                    {topic.hot && topic.hot > 0 && (
-                      <span className="hot-badge text-[10px] sm:text-xs">
-                        <AnimatedNumber
-                          value={topic.hot}
-                          formatFn={formatHotValue}
-                          duration={600}
-                        />
-                      </span>
-                    )}
-                  </div>
+                  {topic.hot && topic.hot > 0 && (
+                    <span className="hot-badge text-[10px] flex-shrink-0">
+                      <AnimatedNumber
+                        value={topic.hot}
+                        formatFn={formatHotValue}
+                        duration={600}
+                      />
+                    </span>
+                  )}
                 </div>
-                {/* Platform tags for featured card */}
-                {isFeatured && topic.platforms && topic.platforms.length > 1 && (
-                  <div className="flex items-center gap-1 mt-1 ml-9">
-                    {topic.platforms.map((plat, pidx) => (
+                {/* Platform tags for aggregated */}
+                {topic.platforms && topic.platforms.length > 1 && (
+                  <div className="flex items-center gap-1 mt-0.5 ml-7">
+                    {topic.platforms.slice(0, 3).map((plat, pidx) => (
                       <span
                         key={pidx}
                         className="px-1.5 py-0.5 bg-indigo-500/20 text-indigo-300 text-[10px] rounded font-medium"

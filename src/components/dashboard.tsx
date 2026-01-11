@@ -180,7 +180,6 @@ export function Dashboard({ platforms, onPlatformsChange, lastUpdated }: Dashboa
               platformData={platform}
               onRefresh={handleRefresh}
               index={index}
-              isFeatured={platform.platform === 'aggregated'}
             />
           ))}
         </div>
